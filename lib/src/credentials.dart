@@ -86,7 +86,7 @@ class Credentials {
   }
 
   /// Whether it's possible to refresh these credentials.
-  bool get canRefresh => refreshToken != null && tokenEndpoint != null;
+  bool get canRefresh => tokenEndpoint != null;
 
   /// Creates a new set of credentials.
   ///
