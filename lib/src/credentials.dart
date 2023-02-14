@@ -228,10 +228,13 @@ class Credentials {
 
     var startTime = DateTime.now();
     var tokenEndpoint = this.tokenEndpoint;
+    var body = {};
+
     if (refreshToken != null && tokenEndpoint != null) {
-      var body = {'grant_type': 'refresh_token', 'refresh_token': refreshToken};
+      body['grant_type'] = 'refresh_token';
+      body['refresh_token'] = refreshToken;
     } else if (refreshToken == null && tokenEndpoint != null) {
-      var body = {'grant_type': 'client_credentials'};
+      body['grant_type'] = 'client_credentials';
     } else {
       throw StateError("Can't refresh credentials without a token "
           'endpoint.');
