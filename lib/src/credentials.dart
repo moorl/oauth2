@@ -228,17 +228,16 @@ class Credentials {
 
     var startTime = DateTime.now();
     var tokenEndpoint = this.tokenEndpoint;
-    if (refreshToken == null) {
-      throw StateError("Can't refresh credentials without a refresh "
-          'token.');
-    } else if (tokenEndpoint == null) {
+    if (refreshToken != null && tokenEndpoint != null) {
+      var body = {'grant_type': 'refresh_token', 'refresh_token': refreshToken};
+    } else if (refreshToken == null && tokenEndpoint != null) {
+      var body = {'grant_type': 'client_credentials'};
+    } else {
       throw StateError("Can't refresh credentials without a token "
           'endpoint.');
     }
 
     var headers = <String, String>{};
-
-    var body = {'grant_type': 'refresh_token', 'refresh_token': refreshToken};
     if (scopes.isNotEmpty) body['scope'] = scopes.join(_delimiter);
 
     if (basicAuth && secret != null) {
