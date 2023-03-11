@@ -78,7 +78,7 @@ class Client extends http.BaseClient {
   http.Client? _httpClient;
 
   static int _calls = 0;
-  static int _minCallsBeforeNewInstance = 10;
+  static int _minCallsBeforeNewInstance = 8;
 
   /// Creates a new client from a pre-existing set of credentials.
   ///
