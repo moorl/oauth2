@@ -112,7 +112,6 @@ class Client extends http.BaseClient {
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     _calls++;
     _ongoingCallsCount++;
-    Logger.debug('GET ($_calls): $url');
 
     if (credentials.isExpired) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
@@ -208,7 +207,6 @@ class Client extends http.BaseClient {
   }
 
   void _refreshHttpClientInstance() {
-    Logger.debug('Closing existing http client and create new one');
     _httpClient?.close();
     _httpClient = httpClient ?? http.Client();
     _httpClient.maxConnectionsPerHost = 4;
