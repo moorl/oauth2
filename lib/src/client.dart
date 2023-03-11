@@ -199,7 +199,8 @@ class Client extends http.BaseClient {
   }
 
   void _refreshHttpClientInstance() {
-    _httpClient?.close(force: true);
+    _httpClient?.close();
+    _httpClient = null;
     _httpClient = IOClient(_createHttpClient());
   }
 
