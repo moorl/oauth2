@@ -208,7 +208,7 @@ class Client extends http.BaseClient {
 
   void _refreshHttpClientInstance() {
     _httpClient?.close();
-    _httpClient = httpClient ?? http.Client();
+    _httpClient = http.Client();
     _httpClient.maxConnectionsPerHost = 4;
     _httpClient.connectionTimeout = const Duration(seconds: 5);
     _httpClient.idleTimeout = const Duration(seconds: 5);
