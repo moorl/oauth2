@@ -114,6 +114,11 @@ class Client extends http.BaseClient {
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (_calls >= _minCallsBeforeNewInstance) {
       _refreshHttpClientInstance();
+
+      if (_refreshingFuture != null) {
+        throw AuthorizationException('Frozen client', 'no response', null);
+      }
+
       _refreshingFuture = null; /// If frozen while refreshing credentials
       _calls = 0;
     }
