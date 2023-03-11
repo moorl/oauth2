@@ -114,26 +114,25 @@ class Client extends http.BaseClient {
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (_calls >= _minCallsBeforeNewInstance) {
       _refreshHttpClientInstance();
-
-      if (_refreshingFuture != null) {
-        throw AuthorizationException('Frozen client', 'no response', null);
-      }
-
       _refreshingFuture = null; /// If frozen while refreshing credentials
       _calls = 0;
-    }
-
-    if (credentials.isExpired) {
-      if (!credentials.canRefresh) throw ExpirationException(credentials);
-      _calls++;
-      await refreshCredentials();
-      _calls--;
     }
 
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
     _calls++;
     var response = await _httpClient!.send(request);
     _calls--;
+
+    if (credentials.isExpired) {
+      if (!credentials.canRefresh) throw ExpirationException(credentials);
+      _calls++;
+      await refreshCredentials();
+      _calls--;
+
+      _calls++;
+      response = await _httpClient!.send(request);
+      _calls--;
+    }
 
     if (response.statusCode != 401)  {
       return response;
