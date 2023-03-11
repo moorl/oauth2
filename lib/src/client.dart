@@ -124,9 +124,11 @@ class Client extends http.BaseClient {
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
     var response = await _httpClient!.send(request);
 
-    _calls--;
+    if (response.statusCode != 401)  {
+      _calls--; /// Received a valid Response
+      return response;
+    }
 
-    if (response.statusCode != 401) return response;
     if (!response.headers.containsKey('www-authenticate')) return response;
 
     List<AuthenticationChallenge> challenges;
