@@ -112,29 +112,25 @@ class Client extends http.BaseClient {
   /// sending the request if necessary.
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    _calls++;
-    _log.info('$_calls open');
     if (_calls >= _minCallsBeforeNewInstance) {
-      _log.info('create new http client instance');
       _refreshHttpClientInstance();
       _refreshingFuture = null; /// If frozen while refreshing credentials
       _calls = 0;
     }
 
     if (credentials.isExpired) {
-      _log.info('credentials expired');
       if (!credentials.canRefresh) throw ExpirationException(credentials);
+      _calls++;
       await refreshCredentials();
-      _log.info('credentials refreshed');
+      _calls--;
     }
 
-    _log.info('request called');
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
+    _calls++;
     var response = await _httpClient!.send(request);
-    _log.info('response received');
+    _calls--;
 
     if (response.statusCode != 401)  {
-      _calls--; /// Received a valid Response
       return response;
     }
 
