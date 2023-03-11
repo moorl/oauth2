@@ -118,21 +118,17 @@ class Client extends http.BaseClient {
       _calls = 0;
     }
 
-    request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
-    _calls++;
-    var response = await _httpClient!.send(request);
-    _calls--;
-
     if (credentials.isExpired) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
       _calls++;
       await refreshCredentials();
       _calls--;
-
-      _calls++;
-      response = await _httpClient!.send(request);
-      _calls--;
     }
+
+    request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
+    _calls++;
+    var response = await _httpClient!.send(request);
+    _calls--;
 
     if (response.statusCode != 401)  {
       return response;
@@ -212,7 +208,8 @@ class Client extends http.BaseClient {
   void _refreshHttpClientInstance() {
     _httpClient?.close();
     _httpClient = null;
-    _httpClient = IOClient(_createHttpClient());
+    _httpClient = http.Client();
+    ///_httpClient = IOClient(_createHttpClient());
   }
 
   HttpClient _createHttpClient() {
