@@ -113,6 +113,7 @@ class Client extends http.BaseClient {
     _calls++;
     if (_calls >= _minCallsBeforeNewInstance) {
       _refreshHttpClientInstance();
+      _refreshingFuture = null; /// If frozen while refreshing credentials
       _calls = 0;
     }
 
