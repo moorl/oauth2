@@ -207,8 +207,6 @@ class Client extends http.BaseClient {
   HttpClient _createHttpClient() {
     final HttpClient httpClient = HttpClient();
     httpClient.maxConnectionsPerHost = 4;
-    httpClient.connectionTimeout = const Duration(seconds: 5);
-    httpClient.idleTimeout = const Duration(seconds: 5);
     return httpClient;
   }
 }
