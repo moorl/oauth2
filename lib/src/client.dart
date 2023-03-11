@@ -75,6 +75,11 @@ class Client extends http.BaseClient {
   /// The underlying HTTP client.
   http.Client? _httpClient;
 
+  static int _calls = 0;
+  static int _minCallsBeforeNewInstance = 200;
+  // record ongoing calls - needed otherwise a forced close and new instance of http client may cause problems with pending calls
+  static int _ongoingCallsCount = 0;
+
   /// Creates a new client from a pre-existing set of credentials.
   ///
   /// When authorizing a client for the first time, you should use
@@ -105,13 +110,19 @@ class Client extends http.BaseClient {
   /// sending the request if necessary.
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    _calls++;
+    _ongoingCallsCount++;
+    Logger.debug('GET ($_calls): $url');
+
     if (credentials.isExpired) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
       await refreshCredentials();
     }
 
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
-    var response = await _httpClient!.send(request);
+    var response = await _httpClient!
+        .send(request)
+        .whenComplete(_handleCallComplete);
 
     if (response.statusCode != 401) return response;
     if (!response.headers.containsKey('www-authenticate')) return response;
@@ -183,5 +194,26 @@ class Client extends http.BaseClient {
   void close() {
     _httpClient?.close();
     _httpClient = null;
+  }
+
+  void _handleCallComplete() {
+    if (_ongoingCallsCount > 0) _ongoingCallsCount--;
+    if (_ongoingCallsCount < 0) _ongoingCallsCount = 0;
+    // create new instance only if no pending calls are out there and the minimum calls have been reached
+    if (_ongoingCallsCount == 0 && _calls >= _minCallsBeforeNewInstance) {
+      Logger.debug('Closing existing http client and create new one');
+      _httpClient.close();
+      _httpClient = createHttpClient();
+      // reset calls
+      _calls = 0;
+    }
+  }
+
+  HttpClient createHttpClient() {
+    final HttpClient httpClient = HttpClient();
+    httpClient.maxConnectionsPerHost = 4;
+    httpClient.connectionTimeout = const Duration(seconds: 5);
+    httpClient.idleTimeout = const Duration(seconds: 5);
+    return httpClient;
   }
 }
