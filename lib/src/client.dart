@@ -9,6 +9,7 @@ import 'package:collection/collection.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:logging/logging.dart';
 
 import 'authorization_exception.dart';
 import 'credentials.dart';
@@ -79,6 +80,7 @@ class Client extends http.BaseClient {
 
   static int _calls = 0;
   static int _minCallsBeforeNewInstance = 8;
+  final Logger _log = Logger('Client');
 
   /// Creates a new client from a pre-existing set of credentials.
   ///
@@ -111,19 +113,25 @@ class Client extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     _calls++;
+    _log.info('$_calls open');
     if (_calls >= _minCallsBeforeNewInstance) {
+      _log.info('create new http client instance');
       _refreshHttpClientInstance();
       _refreshingFuture = null; /// If frozen while refreshing credentials
       _calls = 0;
     }
 
     if (credentials.isExpired) {
+      _log.info('credentials expired');
       if (!credentials.canRefresh) throw ExpirationException(credentials);
       await refreshCredentials();
+      _log.info('credentials refreshed');
     }
 
+    _log.info('request called');
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
     var response = await _httpClient!.send(request);
+    _log.info('response received');
 
     if (response.statusCode != 401)  {
       _calls--; /// Received a valid Response
