@@ -209,12 +209,5 @@ class Client extends http.BaseClient {
     _httpClient?.close();
     _httpClient = null;
     _httpClient = http.Client();
-    ///_httpClient = IOClient(_createHttpClient());
-  }
-
-  HttpClient _createHttpClient() {
-    final HttpClient httpClient = HttpClient();
-    httpClient.maxConnectionsPerHost = 4;
-    return httpClient;
   }
 }
