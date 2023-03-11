@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:http_parser/http_parser.dart';
 
 import 'authorization_exception.dart';
@@ -208,9 +209,14 @@ class Client extends http.BaseClient {
 
   void _refreshHttpClientInstance() {
     _httpClient?.close();
-    _httpClient = http.Client();
-    _httpClient.maxConnectionsPerHost = 4;
-    _httpClient.connectionTimeout = const Duration(seconds: 5);
-    _httpClient.idleTimeout = const Duration(seconds: 5);
+    _httpClient = IOClient(_createHttpClient());
+  }
+
+  HttpClient _createHttpClient() {
+    final HttpClient httpClient = HttpClient();
+    httpClient.maxConnectionsPerHost = 4;
+    httpClient.connectionTimeout = const Duration(seconds: 5);
+    httpClient.idleTimeout = const Duration(seconds: 5);
+    return httpClient;
   }
 }
