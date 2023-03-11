@@ -201,19 +201,18 @@ class Client extends http.BaseClient {
     if (_ongoingCallsCount < 0) _ongoingCallsCount = 0;
     // create new instance only if no pending calls are out there and the minimum calls have been reached
     if (_ongoingCallsCount == 0 && _calls >= _minCallsBeforeNewInstance) {
-      Logger.debug('Closing existing http client and create new one');
-      _httpClient.close();
-      _httpClient = createHttpClient();
+      _refreshHttpClientInstance();
       // reset calls
       _calls = 0;
     }
   }
 
-  HttpClient createHttpClient() {
-    final HttpClient httpClient = HttpClient();
-    httpClient.maxConnectionsPerHost = 4;
-    httpClient.connectionTimeout = const Duration(seconds: 5);
-    httpClient.idleTimeout = const Duration(seconds: 5);
-    return httpClient;
+  void _refreshHttpClientInstance() {
+    Logger.debug('Closing existing http client and create new one');
+    _httpClient?.close();
+    _httpClient = httpClient ?? http.Client();
+    _httpClient.maxConnectionsPerHost = 4;
+    _httpClient.connectionTimeout = const Duration(seconds: 5);
+    _httpClient.idleTimeout = const Duration(seconds: 5);
   }
 }
