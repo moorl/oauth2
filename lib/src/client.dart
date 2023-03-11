@@ -78,9 +78,7 @@ class Client extends http.BaseClient {
   http.Client? _httpClient;
 
   static int _calls = 0;
-  static int _minCallsBeforeNewInstance = 200;
-  // record ongoing calls - needed otherwise a forced close and new instance of http client may cause problems with pending calls
-  static int _ongoingCallsCount = 0;
+  static int _minCallsBeforeNewInstance = 10;
 
   /// Creates a new client from a pre-existing set of credentials.
   ///
@@ -113,7 +111,10 @@ class Client extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     _calls++;
-    _ongoingCallsCount++;
+    if (_calls >= _minCallsBeforeNewInstance) {
+      _refreshHttpClientInstance();
+      _calls = 0;
+    }
 
     if (credentials.isExpired) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
@@ -121,9 +122,9 @@ class Client extends http.BaseClient {
     }
 
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
-    var response = await _httpClient!
-        .send(request)
-        .whenComplete(_handleCallComplete);
+    var response = await _httpClient!.send(request);
+
+    _calls--;
 
     if (response.statusCode != 401) return response;
     if (!response.headers.containsKey('www-authenticate')) return response;
@@ -197,19 +198,8 @@ class Client extends http.BaseClient {
     _httpClient = null;
   }
 
-  void _handleCallComplete() {
-    if (_ongoingCallsCount > 0) _ongoingCallsCount--;
-    if (_ongoingCallsCount < 0) _ongoingCallsCount = 0;
-    // create new instance only if no pending calls are out there and the minimum calls have been reached
-    if (_ongoingCallsCount == 0 && _calls >= _minCallsBeforeNewInstance) {
-      _refreshHttpClientInstance();
-      // reset calls
-      _calls = 0;
-    }
-  }
-
   void _refreshHttpClientInstance() {
-    _httpClient?.close();
+    _httpClient?.close(force: true);
     _httpClient = IOClient(_createHttpClient());
   }
 
